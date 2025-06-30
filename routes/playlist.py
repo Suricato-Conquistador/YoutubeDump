@@ -1,7 +1,8 @@
 import os
+from bson import ObjectId
 from fastapi import APIRouter
 from youtool import YouTube
-from configurations import playlists_db
+from configurations import playlists_db, videos_db
 from database.schemas import PlaylistCreate, all_playlists
 
 
@@ -24,14 +25,25 @@ async def post_playlist(playlist_data: PlaylistCreate):
             videos = list(yt.playlist_videos(playlist["id"]))
             video_ids = [video["id"] for video in videos]
 
-            document = {
+            playlist_document = {
                 "title": playlist["title"],
                 "description": playlist["description"],
                 "number_of_videos": len(video_ids),
-                "videos": video_ids,
             }
 
-            playlists_db.insert_one(document)
+            result = playlists_db.insert_one(playlist_document)
+            
+            for video in videos:
+
+                video_document = {
+                    "title": video["title"],
+                    "description": video["description"],
+                    "playlist_id": result.inserted_id
+                }
+
+                result2 = videos_db.insert_one(video_document)
+                playlists_db.update_one({"_id": ObjectId(result.inserted_id)}, {"$push": {"videos": ObjectId(result2.inserted_id)}})
+
             print("Playlist inserida no banco de dados.")
 
     return {"message": "Playlists processadas com sucesso"}

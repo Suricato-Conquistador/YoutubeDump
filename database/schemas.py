@@ -23,5 +23,17 @@ def document_playlist(playlist):
         "title": str(playlist["title"]),
         "description": str(playlist["description"]),
         "number_of_videos": str(playlist["number_of_videos"]),
-        "videos": [str(task) for task in playlist["videos"]]
+        "videos": [str(task) for task in playlist.get("videos", [])]  # ← aqui está a correção
+    }
+
+
+def all_videos(videos):
+    return [document_video(video) for video in videos]
+
+def document_video(video):
+    return {
+        "_id": str(video["_id"]),
+        "title": str(video["title"]),
+        "description": str(video["description"]),
+        "playlist_id": str(video["playlist_id"])
     }
